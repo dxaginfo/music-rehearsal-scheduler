@@ -15,7 +15,7 @@ exports.up = function(knex) {
       table.string('status').defaultTo('scheduled'); // scheduled, cancelled, completed
       table.uuid('created_by').references('id').inTable('users').onDelete('SET NULL');
       table.decimal('cost', 10, 2);
-      table.uuid('setlist_id').references('id').inTable('setlists').onDelete('SET NULL');
+      table.uuid('setlist_id'); // Will be altered later to add the foreign key constraint
       table.jsonb('notes').defaultTo('{}');
       table.boolean('reminder_sent').defaultTo(false);
       table.timestamp('created_at').defaultTo(knex.fn.now());
@@ -43,28 +43,11 @@ exports.up = function(knex) {
       table.index('rehearsal_id');
       table.index('user_id');
       table.index('status');
-    })
-    
-    // Create rehearsal_equipment table (junction table)
-    .createTable('rehearsal_equipment', function(table) {
-      table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-      table.uuid('rehearsal_id').references('id').inTable('rehearsals').onDelete('CASCADE').notNullable();
-      table.uuid('equipment_id').references('id').inTable('equipment').onDelete('CASCADE').notNullable();
-      table.text('notes');
-      table.uuid('assigned_by').references('id').inTable('users').onDelete('SET NULL');
-      table.timestamp('created_at').defaultTo(knex.fn.now());
-      
-      // Each equipment can only be assigned once per rehearsal
-      table.unique(['rehearsal_id', 'equipment_id']);
-      
-      table.index('rehearsal_id');
-      table.index('equipment_id');
     });
 };
 
 exports.down = function(knex) {
   return knex.schema
-    .dropTable('rehearsal_equipment')
     .dropTable('rehearsal_attendees')
     .dropTable('rehearsals');
 };
